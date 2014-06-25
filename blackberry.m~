@@ -1,0 +1,26 @@
+clear all;
+close all;
+clc;
+
+[ndata, text, allData] = xlsread('Blackberry.xlsx');
+
+dates = flipud(datestr(ndata(:,1) + datenum('01-Jan-1904')));
+closing = flipud(ndata(:,5));
+
+figure;
+
+subplot(2,1,1);
+plot(datenum(dates), closing);
+grid on;
+datetick('x');
+xlabel('Date');
+ylabel('Closing Stock Price ($)');
+title('Blackberry Stock Price in 2013');
+
+subplot(2,1,2);
+hist(closing, (max(closing)-min(closing));
+
+fprintf('Min: $%.2f\n', min(closing));
+fprintf('Max: $%.2f\n', max(closing));
+fprintf('Range: $%.2f\n', max(closing)-min(closing));
+fprintf('Mean: $%.2f\n', mean(closing));
