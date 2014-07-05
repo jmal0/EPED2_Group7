@@ -13,8 +13,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.OvalShape;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -27,7 +25,6 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -38,7 +35,6 @@ public class Test2 extends Activity implements SensorEventListener{
     
     // drawable stuff
     CustomDrawableView mCustomDrawableView;
-    ShapeDrawable mDrawable;
     
     // accelerometer stuff
     public float mLastX, mLastY, mLastZ;
@@ -66,6 +62,8 @@ public class Test2 extends Activity implements SensorEventListener{
         tvYVel = (TextView) findViewById(R.id.yVel);
         
         setTitle("Test");
+        
+        // set screen vertical only
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         
         // accelerometer stuff
@@ -153,24 +151,25 @@ public class Test2 extends Activity implements SensorEventListener{
 
     private class CustomDrawableView extends View {
         
-        public int ovalCount = 2;
-        public RectF oval = new RectF();
-        public ArrayList<RectF> ovals = new ArrayList<RectF>();
+        // canvas setup
         public Paint p = new Paint();
-        
         public float canvasWidth = 0, canvasHeight = 0;
         public boolean initialized = false; // make sure to get canvas width/height
         
-        public float xPos = 0, yPos = 0;
-        public float xVel = 0, yVel = 0, friction = 5;
+        // controlled oval
+        public RectF oval = new RectF();
+        public float xPos = 0, yPos = 0, xVel = 0, yVel = 0;
+        public float width = 10, height = 10;
+        
+        // other ovals
+        public ArrayList<RectF> ovals = new ArrayList<RectF>();
         public ArrayList<float[][]> ovalsTraj = new ArrayList<float[][]>(); // first -> oval number, 2 -> oval pos/vel, 3 -> x/y
-        public float width = 30, height = 30;
-        public float sWidth = 20, sHeight = 20; // smaller width and height of other ovals
+        public ArrayList<Float> ovalsSize = new ArrayList<Float>();
+        //public float sWidth = 5, sHeight = 5; // starting width and height of first ovals
 
         public CustomDrawableView(Context context) {
             super(context);
             this.setBackgroundColor(Color.WHITE);
-            mDrawable = new ShapeDrawable(new OvalShape());
             
             // add circle every 5 seconds
             final Handler h = new Handler();
@@ -184,16 +183,18 @@ public class Test2 extends Activity implements SensorEventListener{
                                     if (ovals.size() < 10){
                                         Random r = new Random();
                                         ovals.add(new RectF());
+                                        float w = r.nextFloat()*2*width;
+                                        ovalsSize.add(w);
                                         float[][] ovalTraj = {
                                             {
                                                 // start at random corner
-                                                Math.round(r.nextFloat())*(canvasWidth-sWidth),
-                                                Math.round(r.nextFloat())*(canvasHeight-sHeight)
+                                                Math.round(r.nextFloat())*(canvasWidth-w),
+                                                Math.round(r.nextFloat())*(canvasHeight-w)
                                             },
                                             {
                                                 // with random velocity
-                                                Math.round(r.nextFloat()) == 0 ? 1 : -1,
-                                                Math.round(r.nextFloat()) == 0 ? -1 : 1
+                                                r.nextFloat()*2+1,
+                                                r.nextFloat()*2+1
                                             }
                                         }; 
                                         ovalsTraj.add(ovalTraj);
@@ -207,8 +208,6 @@ public class Test2 extends Activity implements SensorEventListener{
                     }
                 }
             }).start();
-            
-            System.out.println(this.getWidth() + ", " + this.getHeight());
         }
         
         @Override
@@ -254,7 +253,6 @@ public class Test2 extends Activity implements SensorEventListener{
                 canvas.drawOval(oval, p);
                 
                 
-                //if (oval2alive){
                 for (int i = 0; i < ovals.size(); i++){
                     
                     float[][] traj = ovalsTraj.get(i);
@@ -270,21 +268,21 @@ public class Test2 extends Activity implements SensorEventListener{
                         x2Pos = 0;
                         x2Vel = Math.abs(x2Vel);
                     }
-                    if (x2Pos > this.getWidth()-sWidth){
-                        x2Pos = this.getWidth()-sWidth;
+                    if (x2Pos > this.getWidth()-ovalsSize.get(i)){
+                        x2Pos = this.getWidth()-ovalsSize.get(i);
                         x2Vel = -Math.abs(x2Vel);
                     }
                     if (y2Pos < 0){
                         y2Pos = 0;
                         y2Vel = Math.abs(y2Vel);
                     }
-                    if (y2Pos > this.getHeight()-sHeight){
-                        y2Pos = this.getHeight()-sHeight;
+                    if (y2Pos > this.getHeight()-ovalsSize.get(i)){
+                        y2Pos = this.getHeight()-ovalsSize.get(i);
                         y2Vel = -Math.abs(y2Vel);
                     }
 
                     p.setColor(Color.GREEN);
-                    ovals.get(i).set(x2Pos, y2Pos, sWidth + x2Pos, sHeight + y2Pos);
+                    ovals.get(i).set(x2Pos, y2Pos, ovalsSize.get(i) + x2Pos, ovalsSize.get(i) + y2Pos);
                     canvas.drawOval(ovals.get(i), p);
                     
                     traj[0][0] = x2Pos;
@@ -293,14 +291,13 @@ public class Test2 extends Activity implements SensorEventListener{
                     traj[1][1] = y2Vel;
                     ovalsTraj.set(i,traj);
                     
-                    //double d = Math.sqrt(Math.pow(x2Pos-xPos,2) + Math.pow(y2Pos-yPos,2));
                     if (oval.intersect(ovals.get(i))){
+                        float area = (float) (Math.PI*Math.pow(ovalsSize.get(i)/2,2));
+                        width += (float) (2*Math.sqrt(area/Math.PI));
+                        height = width;
                         ovals.remove(i);
                         ovalsTraj.remove(i);
-                        float area = (float) (Math.PI*Math.pow(width/2,2));
-                        area += (float) (Math.PI*Math.pow(sWidth/2,2));
-                        width = (float) (2*Math.sqrt(area/Math.PI));
-                        height = width;
+                        ovalsSize.remove(i);
                     }
                     
                 }
@@ -317,29 +314,23 @@ public class Test2 extends Activity implements SensorEventListener{
                 ovals.add(new RectF());
                 ovals.add(new RectF());
                 
+                // set size of first 2 ovals to half the starting size of controlled oval
+                ovalsSize.add(width/2);
+                ovalsSize.add(height/2);
+                
                 float[][] oval1Traj = {{0,0}, {1,1}}; // set the first oval's xPos and yPos to zero and vel of 1
                 ovalsTraj.add(oval1Traj);
-                float[][] oval2Traj = {{canvasWidth-sWidth,0}, {1,1}}; // start 2nd one on upper right and vel of 1
+                float[][] oval2Traj = {{canvasWidth-width/2,0}, {1,1}}; // start 2nd one on upper right and vel of 1
                 ovalsTraj.add(oval2Traj);
                 
                 
                 System.out.println(this.getWidth() + ", " + this.getHeight());
             }
             
+            // redraw on canvas
             invalidate();
             
         }
-        
-        @Override
-         public void onWindowFocusChanged(boolean hasFocus) {
-            // TODO Auto-generated method stub
-            super.onWindowFocusChanged(hasFocus);
-            //Here you can get the size!
-          
-            System.out.println("width: " + this.getWidth());
-            System.out.println("height: " + this.getHeight());
-           
-         }
 
     }
     
