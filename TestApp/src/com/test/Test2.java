@@ -39,11 +39,9 @@ public class Test2 extends Activity implements SensorEventListener{
     CustomDrawableView mCustomDrawableView;
     
     // accelerometer stuff
-    public float mLastX, mLastY, mLastZ;
-    private boolean mInitialized;
+    public float xAccel, yAccel, zAccel;
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
-    private final float NOISE = (float) 2.0;
     
     public TextView tvX, tvY, tvZ, tvXPos, tvYPos, tvXVel, tvYVel;
 
@@ -68,12 +66,11 @@ public class Test2 extends Activity implements SensorEventListener{
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         
         // accelerometer stuff
-        mInitialized = false;
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         
-        // custome drawable
+        // setup custom canvas
         mCustomDrawableView = new CustomDrawableView(this);
         
         // set parameters
@@ -114,76 +111,47 @@ public class Test2 extends Activity implements SensorEventListener{
     public void onSensorChanged(SensorEvent event) {
         
         // the actual tilt angles
-        float x = event.values[0];
-        float y = event.values[1];
-        float z = event.values[2];
-        
-        // get the current tilt angles
-        if (!mInitialized) {
-            mLastX = x;
-            mLastY = y;
-            mLastZ = z;
-            tvX.setText("x: 0.0");
-            tvY.setText("y: 0.0");
-            tvZ.setText("z: 0.0");
-            mInitialized = true;
-        }
-        else{
+        xAccel = event.values[0];
+        yAccel = event.values[1];
+        zAccel = event.values[2];
             
-            // calculating the change in tilt and checking with noise
-            float deltaX = Math.abs(mLastX - x);
-            float deltaY = Math.abs(mLastY - y);
-            float deltaZ = Math.abs(mLastZ - z);
-            if (deltaX < NOISE) deltaX = (float)0.0;
-            if (deltaY < NOISE) deltaY = (float)0.0;
-            if (deltaZ < NOISE) deltaZ = (float)0.0;
-            mLastX = x;
-            mLastY = y;
-            mLastZ = z;
-            /*tvX.setText("x: " + Float.toString(deltaX));
-            tvY.setText("y: " + Float.toString(deltaY));
-            tvZ.setText("z: " + Float.toString(deltaZ));*/
-            
-            // display the absolute values
-            tvX.setText("x: " + round(x,4));
-            tvY.setText("y: " + round(y,4));
-            tvZ.setText("z: " + round(z,4));
-        }
+        // display the absolute values
+        tvX.setText("xAcc: " + round(xAccel,4));
+        tvY.setText("yAcc: " + round(yAccel,4));
+        tvZ.setText("zAcc: " + round(zAccel,4));
     }
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     
     }
     
+    // for rounding float to max of n decimal places
     public float round(float d, int decimalPlace){
         BigDecimal bd = new BigDecimal(Float.toString(d));
         bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
         return bd.floatValue();
     }
 
+    // the game view
     private class CustomDrawableView extends View {
         
         // canvas setup
         public Paint p = new Paint();
-        public float canvasWidth = 0, canvasHeight = 0;
+        public float canvasWidth, canvasHeight;
         public boolean initialized = false; // make sure to get canvas width/height
         
         // controlled oval
-        public RectF oval = new RectF();
-        public float xPos = 0, yPos = 0, xVel = 0, yVel = 0;
-        public float width = 10, height = 10;
+        public RectF oval = new RectF(0,0,10,10);
         
         // other ovals
         public ArrayList<RectF> ovals = new ArrayList<RectF>();
-        public ArrayList<float[][]> ovalsTraj = new ArrayList<float[][]>(); // first -> oval number, 2 -> oval pos/vel, 3 -> x/y
-        public ArrayList<Float> ovalsSize = new ArrayList<Float>();
-        //public float sWidth = 5, sHeight = 5; // starting width and height of first ovals
+        public ArrayList<float[]> ovalsVel = new ArrayList<float[]>(); // [xVel,yVel]
 
         public CustomDrawableView(Context context) {
             super(context);
             this.setBackgroundColor(Color.WHITE);
             
-            // add circle every 5 seconds
+            // add circle every second
             final Handler h = new Handler();
             new Thread(new Runnable(){
                 public void run() {
@@ -192,24 +160,14 @@ public class Test2 extends Activity implements SensorEventListener{
                             Thread.sleep(1000);
                             h.post(new Runnable(){
                                 public void run(){
-                                    if (ovals.size() < 10){
+                                    if (ovals.size() < 10){ // limit of 10 ovals on canvas
                                         Random r = new Random();
-                                        ovals.add(new RectF());
-                                        float w = r.nextFloat()*2*width;
-                                        ovalsSize.add(w);
-                                        float[][] ovalTraj = {
-                                            {
-                                                // start at random corner
-                                                Math.round(r.nextFloat())*(canvasWidth-w),
-                                                Math.round(r.nextFloat())*(canvasHeight-w)
-                                            },
-                                            {
-                                                // with random velocity
-                                                r.nextFloat()*2+ (float) 0.5,
-                                                r.nextFloat()*2+ (float) 0.5
-                                            }
-                                        }; 
-                                        ovalsTraj.add(ovalTraj);
+                                        float nextWidth = r.nextFloat()*2*oval.width();
+                                        float left = Math.round(r.nextFloat())*(canvasWidth-nextWidth);
+                                        float top = Math.round(r.nextFloat())*(canvasHeight-nextWidth);
+                                        float[] nextOvalsVel = {r.nextFloat()*2+(float)0.5,r.nextFloat()*2+(float)0.5};
+                                        ovals.add(new RectF(left,top,left+nextWidth,top+nextWidth));
+                                        ovalsVel.add(nextOvalsVel);
                                     }
                                 }
                             });
@@ -228,98 +186,57 @@ public class Test2 extends Activity implements SensorEventListener{
             if (initialized){
                 
                 // for xVel, tilting right is negative, so flip it
-                // add tilt to vel to accelerate it and friction to slow it down
-                //xVel += -mLastX/friction;
-                //yVel += mLastY/friction;
-                // set tilt to vel to make it easier to control
-                xVel = -mLastX;
-                yVel = mLastY;
-                
-                xPos += xVel;
-                yPos += yVel;
+                // set accel values to velocity to make it easier to control
+                oval.offset(-xAccel, yAccel);
 
-                if (xPos < 0){
-                    xPos = 0;
-                    xVel = Math.abs(xVel);
-                }
-                if (xPos > this.getWidth()-width){
-                    xPos = this.getWidth()-width;
-                    xVel = -Math.abs(xVel);
-                }
-                if (yPos < 0){
-                    yPos = 0;
-                    yVel = Math.abs(yVel);
-                }
-                if (yPos > this.getHeight()-height){
-                    yPos = this.getHeight()-height;
-                    yVel = -Math.abs(yVel);
-                }
+                // set bounds for controlled oval
+                if (oval.left < 0) oval.offsetTo(0,oval.top);
+                if (oval.top < 0) oval.offsetTo(oval.left,0);
+                if (oval.right > canvasWidth) oval.offsetTo(canvasWidth-oval.width(),oval.top);
+                if (oval.bottom > canvasHeight) oval.offsetTo(oval.left,canvasHeight-oval.height());
 
-                tvXPos.setText("xPos: " + round(xPos,4));
-                tvYPos.setText("yPos: " + round(yPos,4));
-                tvXVel.setText("xVel: " + round(xVel,4));
-                tvYVel.setText("yVel: " + round(yVel,4));
+                tvXPos.setText("xPos: " + round(oval.left,4));
+                tvYPos.setText("yPos: " + round(oval.top,4));
+                tvXVel.setText("xVel: " + round(-xAccel,4));
+                tvYVel.setText("yVel: " + round(yAccel,4));
                 
-                oval.set(xPos, yPos, width + xPos, height + yPos);
                 p.setColor(Color.BLACK);
                 canvas.drawOval(oval, p);
                 
-                
+                // set values for other ovals
                 for (int i = 0; i < ovals.size(); i++){
                     
-                    float[][] traj = ovalsTraj.get(i);
-                    float x2Pos = traj[0][0];
-                    float y2Pos = traj[0][1];
-                    float x2Vel = traj[1][0];
-                    float y2Vel = traj[1][1];
-                    
-                    x2Pos += x2Vel;
-                    y2Pos += y2Vel;
-
-                    if (x2Pos < 0){
-                        x2Pos = 0;
-                        x2Vel = Math.abs(x2Vel);
+                    // set bounds for other ovals
+                    ovals.get(i).offset(ovalsVel.get(i)[0],ovalsVel.get(i)[1]);
+                    if (ovals.get(i).left < 0){
+                        ovals.get(i).offsetTo(0,ovals.get(i).top);
+                        ovalsVel.get(i)[0] = Math.abs(ovalsVel.get(i)[0]);
                     }
-                    if (x2Pos > this.getWidth()-ovalsSize.get(i)){
-                        x2Pos = this.getWidth()-ovalsSize.get(i);
-                        x2Vel = -Math.abs(x2Vel);
+                    if (ovals.get(i).top < 0){
+                        ovals.get(i).offsetTo(ovals.get(i).left,0);
+                        ovalsVel.get(i)[1] = Math.abs(ovalsVel.get(i)[1]);
                     }
-                    if (y2Pos < 0){
-                        y2Pos = 0;
-                        y2Vel = Math.abs(y2Vel);
+                    if (ovals.get(i).right > canvasWidth){
+                        ovals.get(i).offsetTo(canvasWidth-ovals.get(i).width(),ovals.get(i).top);
+                        ovalsVel.get(i)[0] = -Math.abs(ovalsVel.get(i)[0]);
                     }
-                    if (y2Pos > this.getHeight()-ovalsSize.get(i)){
-                        y2Pos = this.getHeight()-ovalsSize.get(i);
-                        y2Vel = -Math.abs(y2Vel);
+                    if (ovals.get(i).bottom > canvasHeight){
+                        ovals.get(i).offsetTo(ovals.get(i).left,canvasHeight-ovals.get(i).height());
+                        ovalsVel.get(i)[1] = -Math.abs(ovalsVel.get(i)[1]);
                     }
 
                     p.setColor(Color.GREEN);
-                    ovals.get(i).set(x2Pos, y2Pos, ovalsSize.get(i) + x2Pos, ovalsSize.get(i) + y2Pos);
                     canvas.drawOval(ovals.get(i), p);
                     
-                    traj[0][0] = x2Pos;
-                    traj[0][1] = y2Pos;
-                    traj[1][0] = x2Vel;
-                    traj[1][1] = y2Vel;
-                    ovalsTraj.set(i,traj);
-                    
-                    if (oval.intersect(ovals.get(i))){
-                        /*if (ovalsSize.get(i) <= width){
-                            float area = (float) (Math.PI*Math.pow(ovalsSize.get(i)/2,2));
-                            width += (float) (2*Math.sqrt(area/Math.PI))/10;
-                            height = width;
+                    // initially used intersect method, though was not very accurate for ovals
+                    double d = Math.sqrt(Math.pow(oval.centerX()-ovals.get(i).centerX(),2)+Math.pow(oval.centerY()-ovals.get(i).centerY(),2));
+                    if (d < oval.width()/2 + ovals.get(i).width()/2){
+                        if (ovals.get(i).width() <= oval.width()){
+                            float area = (float) (Math.PI*Math.pow(ovals.get(i).width()/2,2));
+                            float width = oval.width() + (float) (2*Math.sqrt(area/Math.PI))/10;
+                            oval.set(oval.left, oval.top, oval.left+width, oval.top+width);
                             ovals.remove(i);
-                            ovalsTraj.remove(i);
-                            ovalsSize.remove(i);
-                        }*/
-                        double d = Math.sqrt(Math.pow(oval.centerX()-ovals.get(i).centerX(),2)+Math.pow(oval.centerY()-ovals.get(i).centerY(),2));
-                        if (d < width/2 + ovalsSize.get(i)/2){
-                            float area = (float) (Math.PI*Math.pow(ovalsSize.get(i)/2,2));
-                            width += (float) (2*Math.sqrt(area/Math.PI))/10;
-                            height = width;
-                            ovals.remove(i);
-                            ovalsTraj.remove(i);
-                            ovalsSize.remove(i);
+                            ovalsVel.remove(i);
                         }
                         else{
                             quitGame();
@@ -335,20 +252,25 @@ public class Test2 extends Activity implements SensorEventListener{
                 canvasHeight = this.getHeight();
                 initialized = true;
                 
-                xPos = (canvasWidth-width)/2;
-                yPos = (canvasHeight-height)/2;
+                // setup controlled oval
+                float xPos = (canvasWidth-oval.width())/2;
+                float yPos = (canvasHeight-oval.height())/2;
+                oval.set(
+                        xPos,
+                        yPos,
+                        xPos+oval.width(),
+                        yPos+oval.height()
+                );
                 
-                ovals.add(new RectF());
-                ovals.add(new RectF());
+                // setup first 2 other ovals
+                // will be half size of controlled oval
+                ovals.add(new RectF(0,0,oval.width()/2,oval.height()/2));
+                ovals.add(new RectF(canvasWidth-oval.width()/2,0,canvasWidth,oval.height()/2));
                 
-                // set size of first 2 ovals to half the starting size of controlled oval
-                ovalsSize.add(width/2);
-                ovalsSize.add(height/2);
-                
-                float[][] oval1Traj = {{0,0}, {1,1}}; // set the first oval's xPos and yPos to zero and vel of 1
-                ovalsTraj.add(oval1Traj);
-                float[][] oval2Traj = {{canvasWidth-width/2,0}, {1,1}}; // start 2nd one on upper right and vel of 1
-                ovalsTraj.add(oval2Traj);
+                // setup vels for first 2 ovals
+                float[][] initOvalsTraj = {{1,1},{-1,1}};
+                ovalsVel.add(initOvalsTraj[0]);
+                ovalsVel.add(initOvalsTraj[1]);
                 
                 
                 System.out.println(this.getWidth() + ", " + this.getHeight());
