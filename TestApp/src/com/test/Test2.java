@@ -7,7 +7,9 @@
 package com.test;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -44,7 +46,6 @@ public class Test2 extends Activity implements SensorEventListener{
     private final float NOISE = (float) 2.0;
     
     public TextView tvX, tvY, tvZ, tvXPos, tvYPos, tvXVel, tvYVel;
-    
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -83,6 +84,17 @@ public class Test2 extends Activity implements SensorEventListener{
         
         
         System.out.println("done loading");
+    }
+    
+    public void quitGame(){
+        new AlertDialog.Builder(this)
+                .setTitle("You Lose")
+                .setMessage("You suck so much that the game will shut down")
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener(){
+                    public void onClick(DialogInterface dialog, int which){
+                        finish();
+                    }
+                }).show();
     }
     
     // stuff
@@ -193,8 +205,8 @@ public class Test2 extends Activity implements SensorEventListener{
                                             },
                                             {
                                                 // with random velocity
-                                                r.nextFloat()*2+1,
-                                                r.nextFloat()*2+1
+                                                r.nextFloat()*2+ (float) 0.5,
+                                                r.nextFloat()*2+ (float) 0.5
                                             }
                                         }; 
                                         ovalsTraj.add(ovalTraj);
@@ -292,12 +304,27 @@ public class Test2 extends Activity implements SensorEventListener{
                     ovalsTraj.set(i,traj);
                     
                     if (oval.intersect(ovals.get(i))){
-                        float area = (float) (Math.PI*Math.pow(ovalsSize.get(i)/2,2));
-                        width += (float) (2*Math.sqrt(area/Math.PI));
-                        height = width;
-                        ovals.remove(i);
-                        ovalsTraj.remove(i);
-                        ovalsSize.remove(i);
+                        /*if (ovalsSize.get(i) <= width){
+                            float area = (float) (Math.PI*Math.pow(ovalsSize.get(i)/2,2));
+                            width += (float) (2*Math.sqrt(area/Math.PI))/10;
+                            height = width;
+                            ovals.remove(i);
+                            ovalsTraj.remove(i);
+                            ovalsSize.remove(i);
+                        }*/
+                        double d = Math.sqrt(Math.pow(oval.centerX()-ovals.get(i).centerX(),2)+Math.pow(oval.centerY()-ovals.get(i).centerY(),2));
+                        if (d < width/2 + ovalsSize.get(i)/2){
+                            float area = (float) (Math.PI*Math.pow(ovalsSize.get(i)/2,2));
+                            width += (float) (2*Math.sqrt(area/Math.PI))/10;
+                            height = width;
+                            ovals.remove(i);
+                            ovalsTraj.remove(i);
+                            ovalsSize.remove(i);
+                        }
+                        else{
+                            quitGame();
+                            return;
+                        }
                     }
                     
                 }
