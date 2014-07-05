@@ -43,7 +43,7 @@ public class Test2 extends Activity implements SensorEventListener{
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
     
-    public TextView tvX, tvY, tvZ, tvXPos, tvYPos, tvXVel, tvYVel;
+    public TextView tvX, tvY, tvZ, tvXPos, tvYPos, tvXVel, tvYVel, size;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -59,6 +59,7 @@ public class Test2 extends Activity implements SensorEventListener{
         tvYPos = (TextView) findViewById(R.id.yPos);
         tvXVel = (TextView) findViewById(R.id.xVel);
         tvYVel = (TextView) findViewById(R.id.yVel);
+        size = (TextView) findViewById(R.id.size);
         
         setTitle("Test");
         
@@ -83,10 +84,10 @@ public class Test2 extends Activity implements SensorEventListener{
         System.out.println("done loading");
     }
     
-    public void quitGame(){
+    public void quitGame(float size){
         new AlertDialog.Builder(this)
-                .setTitle("You Lose")
-                .setMessage("You suck so much that the game will shut down")
+                .setTitle("Max Size: " + round(size,4))
+                .setMessage("You lost. Now the game will shut down")
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int which){
                         finish();
@@ -239,10 +240,12 @@ public class Test2 extends Activity implements SensorEventListener{
                             ovalsVel.remove(i);
                         }
                         else{
-                            quitGame();
+                            quitGame(oval.width());
                             return;
                         }
                     }
+                    
+                    size.setText("size: " + round(oval.width(),4));
                     
                 }
                 
