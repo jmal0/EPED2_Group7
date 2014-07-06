@@ -21,7 +21,9 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.InputType;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
@@ -61,6 +63,7 @@ public class Test2 extends Activity implements SensorEventListener{
         tvYVel = (TextView) findViewById(R.id.yVel);
         size = (TextView) findViewById(R.id.size);
         
+        
         setTitle("Test");
         
         // set screen vertical only
@@ -85,9 +88,12 @@ public class Test2 extends Activity implements SensorEventListener{
     }
     
     public void quitGame(float size){
+        EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setHint("Enter name here to save score");
         new AlertDialog.Builder(this)
                 .setTitle("Max Size: " + round(size,4))
-                .setMessage("You lost. Now the game will shut down")
+                .setView(input)
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int which){
                         finish();
