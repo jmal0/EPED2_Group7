@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /NewResistorCalculator/gen/
 /NewResistorCalculator/bin/
 /Expression_Calculator/gen/
@@ -12,3 +13,7 @@
 /SqRoot/build/
 /SqRoot/dist/
 /TestApp/gen/
+=======
+TestApp/bin/
+TestApp/local.properties
+>>>>>>> 4177981d0b34a380452d81babfde8f80b84ca437
