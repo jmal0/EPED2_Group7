@@ -9,18 +9,17 @@ package com.test;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TableLayout;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.ArrayList;
 
 /**
  *
@@ -29,8 +28,10 @@ import java.util.logging.Logger;
 public class MainMenu extends Activity {
 
     Button play;
+    TableLayout table;
     
     public final String scores = "Game_Scores.txt";
+    public final String delimeter = "#####";
     
     @Override
     public void onCreate(Bundle icicle) {
@@ -38,6 +39,7 @@ public class MainMenu extends Activity {
         // ToDo add your GUI initialization code here     
         
         setContentView(R.layout.main_menu_layout);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         
         setTitle("Test App Game");
         
@@ -48,10 +50,22 @@ public class MainMenu extends Activity {
                 startActivity(playScreen);
             }
         });
+        table = (TableLayout) findViewById(R.id.table);
         
         checkFile(scores);
-        // add read scores part here
+        
+        /*String topScores = readSavedData(scores);
+        if (topScores.contains(delimeter)){
+            
+        }*/
     }
+    
+    /*public void parseScores(String topScores){
+        String[] scoreArray = topScores.split(delimeter);
+        for (int i = 0; i < scoreArray.length; i+=2){
+            TextView t
+        }
+    }*/
     
     public String readSavedData(String file){
         // note: stringbuffer is synchronized, stringbuilder is not, but both essentially do same
