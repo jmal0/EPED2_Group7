@@ -16,10 +16,15 @@
 
 
 %% 1. Specifies the COM port that the Arduino board is connected to
-comPort = 'COM27';%This can be found out using the device manager (Windows)
-                  %On a mac type ls /dev/tty* in Terminal and 
-                  %  identify the device that is listed as usbmodem
-                  %  Example for a MAC comPort = '/dev/tty.usbmodemfa131';
+
+
+comPort = 'COM6'; % comPort was initially COM27, but the acceleromater was attached to COM6, so we changed it to make the code work
+
+
+%  This can be found out using the device manager (Windows)
+%  On a mac type ls /dev/tty* in Terminal and 
+%  identify the device that is listed as usbmodem
+%  Example for a MAC comPort = '/dev/tty.usbmodemfa131';
 
 %comPort = '/dev/tty.usbmodemfd121';
 
@@ -76,6 +81,7 @@ buf_len = 200;
 gxdata = zeros(buf_len,1);
 gydata = zeros(buf_len,1);
 gzdata = zeros(buf_len,1);
+resultantBuffer = zeros(buf_len,1); % add another buffer for the resultant
 index = 1:buf_len;
 
 % Display x and y label ad title.
@@ -106,6 +112,11 @@ while(get(button, 'UserData'))
     % subplot for resultant maginitude
     subplot(2,1,1);
     %Students plot the magnitude here
+    resultantLength = sqrt(gx^2+gy^2+gz^2); % length of resulting vector
+    resultantBuffer = [resultantBuffer(2:end); resultantLength]; % plot data for resultant vector over time
+    plot(index,resultantBuffer, 'k'); % plot the last 200 readings of the resultantBuffer
+    grid on; % don't forget the grid
+    title('Magnitude of Resultant over Time'); % Title for resultant plot
     %--->
     
     axis([1 buf_len -3.5 3.5]);  
@@ -117,7 +128,9 @@ while(get(button, 'UserData'))
     plot(index,gxdata,'r', index,gydata,'g', index,gzdata,'b');
     axis([1 buf_len -3.5 3.5]);  
     xlabel('time');
+    grid on; % friggin dont forget THE GRID
     ylabel('Magnitude of individual axes acceleration');
+    title('Magnitude of X, Y, and Z Components over Time'); % Title for component plot
 
     drawnow;
       
