@@ -1,0 +1,91 @@
+function varargout = Lab2Question2(varargin)
+% LAB2QUESTION2 MATLAB code for Lab2Question2.fig
+%      LAB2QUESTION2, by itself, creates a new LAB2QUESTION2 or raises the existing
+%      singleton*.
+%
+%      H = LAB2QUESTION2 returns the handle to a new LAB2QUESTION2 or the handle to
+%      the existing singleton*.
+%
+%      LAB2QUESTION2('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in LAB2QUESTION2.M with the given input arguments.
+%
+%      LAB2QUESTION2('Property','Value',...) creates a new LAB2QUESTION2 or raises the
+%      existing singleton*.  Starting from the left, property value pairs are
+%      applied to the GUI before Lab2Question2_OpeningFcn gets called.  An
+%      unrecognized property name or invalid value makes property application
+%      stop.  All inputs are passed to Lab2Question2_OpeningFcn via varargin.
+%
+%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
+%      instance to run (singleton)".
+%
+% See also: GUIDE, GUIDATA, GUIHANDLES
+
+% Edit the above text to modify the response to help Lab2Question2
+
+% Last Modified by GUIDE v2.5 09-Jul-2014 18:36:22
+
+% Begin initialization code - DO NOT EDIT
+gui_Singleton = 1;
+gui_State = struct('gui_Name',       mfilename, ...
+                   'gui_Singleton',  gui_Singleton, ...
+                   'gui_OpeningFcn', @Lab2Question2_OpeningFcn, ...
+                   'gui_OutputFcn',  @Lab2Question2_OutputFcn, ...
+                   'gui_LayoutFcn',  [] , ...
+                   'gui_Callback',   []);
+if nargin && ischar(varargin{1})
+    gui_State.gui_Callback = str2func(varargin{1});
+end
+
+if nargout
+    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+else
+    gui_mainfcn(gui_State, varargin{:});
+end
+% End initialization code - DO NOT EDIT
+
+
+% --- Executes just before Lab2Question2 is made visible.
+function Lab2Question2_OpeningFcn(hObject, eventdata, handles, varargin)
+% This function has no output args, see OutputFcn.
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% varargin   command line arguments to Lab2Question2 (see VARARGIN)
+
+% Choose default command line output for Lab2Question2
+
+
+handles.output = hObject;
+
+% Update handles structure
+guidata(hObject, handles);
+
+% UIWAIT makes Lab2Question2 wait for user response (see UIRESUME)
+% uiwait(handles.figure1);
+
+
+% --- Outputs from this function are returned to the command line.
+function varargout = Lab2Question2_OutputFcn(hObject, eventdata, handles) 
+% varargout  cell array for returning output args (see VARARGOUT);
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get default command line output from handles structure
+varargout{1} = handles.output;
+
+
+% --- Executes on button press in pushbutton1.
+function pushbutton1_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+comPort = 'COM6';
+if (~exist('serialFlag','var'))
+ [accelerometer.s,serialFlag] = setupSerial(comPort);
+end
+if(~exist('calCo', 'var'))
+    calCo = calibrate(accelerometer.s);
+end
+
