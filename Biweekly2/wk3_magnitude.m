@@ -18,7 +18,8 @@
 %% 1. Specifies the COM port that the Arduino board is connected to
 
 
-comPort = 'COM6'; % comPort was initially COM27, but the acceleromater was attached to COM6, so we changed it to make the code work
+comPort = 'COM3'; % comPort was initially COM27, but the accelerometer 
+                  % was attached to COM6, so we changed it
 
 
 %  This can be found out using the device manager (Windows)

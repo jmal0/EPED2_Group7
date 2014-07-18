@@ -53,8 +53,6 @@ function varargout = Lab2Question2(varargin)
         % varargin   command line arguments to Lab2Question2 (see VARARGIN)
 
         % Choose default command line output for Lab2Question2
-
-
         handles.output = hObject;
 
         % Update handles structure
@@ -62,9 +60,10 @@ function varargout = Lab2Question2(varargin)
 
         % UIWAIT makes Lab2Question2 wait for user response (see UIRESUME)
         % uiwait(handles.figure1);
-    
+            
 
     % --- Outputs from this function are returned to the command line.
+    % This function is used to update the rolling plot
     function varargout = Lab2Question2_OutputFcn(hObject, eventdata, handles) 
         % varargout  cell array for returning output args (see VARARGOUT);
         % hObject    handle to figure
@@ -72,83 +71,197 @@ function varargout = Lab2Question2(varargin)
         % handles    structure with handles and user data (see GUIDATA)
 
         % Get default command line output from handles structure
+        varargout{1} = handles.output;
 
-        global accelerometer;
-        global calCo;
         
+        % The following two variables are declared as global because they
+        % are initialized in another function        
+        global accelerometer; % The accelerometer object
+        global calCo; % The calibration settings
+        
+        % The number of data points to include in the rolling plot
         buffLen = 200;
-        indices = 1:buffLen;
-        gxdata = zeros(buffLen, 1);
-        gydata = zeros(buffLen, 1);
-        gzdata = zeros(buffLen, 1);
         
+        % The x vector which contains the values 1 to buffLen
+        indices = 1:buffLen;
+        
+        % Creaty empty vectors for acceleration components
+        gxdata = zeros(buffLen, 1); % x acceleration data
+        gydata = zeros(buffLen, 1); % y acceleration data
+        gzdata = zeros(buffLen, 1); % z acceleration data
+        
+        % Sets the active graph to the empty axes2 object
         axes(handles.axes2);
         
+        % This statement clears the axes grid marks. This axes object will
+        % display the game interface in the final app. It will consist of a
+        % black circle that can move around the screen by rotatting the
+        % accelerometer. Green circles will be spawned and the black circle
+        % will grow larger when it collides with black circles. If it
+        % touches a larger circle, the user loses the game.
+        set(handles.axes2,'xtick',[],'ytick',[]);
         
+        % Sets the active graph to the rolling plot
         axes(handles.axes1);
         
-        grid on;
-        axis([0 200 -3 3]);
-        xlabel('Time');
-        ylabel('Acceleration (g)');
-        title('Rolling Acceleration Component Plot')
+        % Set up rolling plot
+        grid on; % Show gridlines
+        axis([0 200 -3 3]); % Set axis limits
+        xlabel('Time'); % Display x label
+        ylabel('Acceleration (g)'); % Display y label
+        title('Rolling Acceleration Component Plot'); % Display title
             
-        while(1)
+        % This is the loop that draws the rolling plot. It should exit if
+        % the gui has been exited as the handles variable will have been
+        % deleted
+        while(exist('handles','var'))
+            % Update the plot if the sampling button reads "Stop Sampling"
+            % In other words, the user has pressed "Start Sampling"
+            % fprintf('%d\n', exist('handles','var'));
             if(strcmp(get(handles.samplingButton,'String'),'Stop Sampling'))
+                % Get the components of the acceleration
                 [gx, gy, gz] = readAcc(accelerometer, calCo);
-
-                gxdata = [gxdata(2:end) ; gx];
-                gydata = [gydata(2:end) ; gy];
-                gzdata = [gzdata(2:end) ; gz];    
                 
-                plot(indices, gxdata, 'b', indices, gydata, 'r', indices, gzdata, 'g')
+                % Update the set of data to plot with the newest value and
+                % remove the first oldest value
+                gxdata = [gxdata(2:end) ; gx]; % Append newest x accel
+                gydata = [gydata(2:end) ; gy]; % Append newest x accel
+                gzdata = [gzdata(2:end) ; gz]; % Append newest x accel
+                
+                % Plot the past 200 accelerometer readings
+                plot(indices, gxdata, 'b', ... % Plot x component in blue
+                     indices, gydata, 'r', ... % Plot y component in red
+                     indices, gzdata, 'g') % Plot z component in green
+                
+                % Set the axis limits
                 axis([0 200 -3 3]);
                 
+                % Show gridlines
+                grid on;
+                
+                % Update the rolling plot
                 handles.axes1;
-                pause(.01);
+                
+                % Forces matlab to draw the plot
+                drawnow;
             else
+                % The plot should not be updated so the thread rests .01
+                % seconds
                 pause(.01);
             end
         end
-        
-        varargout{1} = handles.output;
 
 
-    % --- Executes on button press in pushbutton1.
+    % --- Executes on button press in setupButton.
+    % Sets up communication with the accelerometer and prompts the user to
+    % calibrate it
     function setupButton_Callback(hObject, eventdata, handles)
         % hObject    handle to pushbutton1 (see GCBO)
         % eventdata  reserved - to be defined in a future version of MATLAB
         % handles    structure with handles and user data (see GUIDATA)
+
         
-        global accelerometer;
-        global calCo;
+        % The following two variables are declared as global because they
+        % are used in another function
+        global accelerometer; % The accelerometer object
+        global calCo; % Contains the calibration coefficients
         
-        comPort = 'COM3';
-        if (~exist('serialFlag','var'))
-            [accelerometer.s,serialFlag] = setupSerial(comPort);
+        % The port which connects to the accelerometer
+        comPort = 'COM6';
+        
+        % This loop repeatedly tries to connect to comPort, unless a
+        % desired port is not indicated.
+        while(~strcmp(comPort, ''))
+            % This statement checks if the serialFlag variable exists,
+            % indicating that the acclerometer is already initialized
+            if (~exist('serialFlag','var'))
+                % This statement catches errors that could occur in
+                % initializing the accelerometer if it is not connected to
+                % comPort
+                try
+                    % Initializes the accelerometer
+                    [accelerometer.s,serialFlag] = setupSerial(comPort);
+                    % Calibrates the accelerometer and saves the calibration results
+                    calCo = calibrate(accelerometer.s);
+                    % If this statement is reached, then the acclerometer
+                    % has been created without any issues, so the function
+                    % is exited
+                    return;
+                catch
+                    % An error occured in initizalizing the accelerometer.
+                    % message is the warning message to display
+                    message = sprintf('Port %s not found. Indicate another port', ...
+                        comPort);
+                    % This statement creates an input dialog box which
+                    % displays the previously mentioned message and saves
+                    % the user input as the new comPort to try. If the
+                    % cancel button is clicked, then the comPort will be ''
+                    % and this function will complete without connecting to
+                    % the accelerometer
+                    comPort = char(inputdlg(message));
+                end
+            end
         end
         
-        calCo = calibrate(accelerometer.s);
+        % This statement displays a warning message indicating that the
+        % accelerometer was not initialized
+        warndlg('No available comPorts. Please connect the accelerometer');
+           
 
     % --- Executes on button press in samplingButton.
+    % Changes the text of the sampling button so that the main thread knows
+    % whether or not to plot accelerometer data.
     function samplingButton_Callback(hObject, eventdata, handles)
         % hObject    handle to samplingButton (see GCBO)
         % eventdata  reserved - to be defined in a future version of MATLAB
         % handles    structure with handles and user data (see GUIDATA)
         
+        % This if else statement changes the text of the sampling button
+        % according to what it currently says
         if(strcmp(get(handles.samplingButton,'String'), 'Start Sampling'))
+            % The current text is "Start Sampling", change it to "Stop
+            % Sampling"
             set(handles.samplingButton,'String','Stop Sampling');
         else
-            % 
+            % The current text is "Stop Sampling", change it to "Start
+            % Sampling"
             set(handles.samplingButton,'String','Start Sampling');
         end
         
         
     % --- Executes on button press in closeSerialButton.
+    % Calls closeSerial to close connection to the accelerometer and close
+    % the gui.
     function closeSerialButton_Callback(hObject, eventdata, handles)
         % hObject    handle to closeSerialButton (see GCBO)
         % eventdata  reserved - to be defined in a future version of MATLAB
         % handles    structure with handles and user data (see GUIDATA)
 
         closeSerial; % Closes connection to the accelerometer
-        
+    
+    % This function will change the difficulty level when the difficulty
+    % slider is moved
+    function difficultySliderChanged_Callback(hObject, eventdata, handles)
+        fprintf('Difficulty Changed\n'); % Prints 'Difficulty Changed' to 
+                                         % the command window
+    
+    
+    % This function will be used to start and pause the game in the final
+    % app
+    function startpauseButton_Callback(hObject, eventdata, handles)
+        if(strcmp(get(handles.samplingButton,'String'), 'Start'))
+            % The current text is "Start" and the game is pasued. Change
+            % it to "Pause" and start the game
+            set(handles.startpauseButton,'String','Pause');
+        else
+            % The current text is "Pause" and the game is running. Change
+            % it to "Start" and pause the game
+            set(handles.startpauseButton,'String','Start');
+        end
+    
+    
+    % In the final app this function will be used to quit the game when the
+    % quit button is pressed
+    function quitButton_Callback(hObject, eventdata, handles)
+        fprintf('Quitting\n'); % Prints 'quitting' to the command window
+    
