@@ -1,134 +1,154 @@
-function Lab2Question2
-    % Authors: Leonard Chan, John Maloney
-    
-    gui_width = 600; % Width of gui window
-    gui_height = 400; % Height of gui window
-    border = 5; % buffer between edge of window and gui elements
-    button_width = 80; % Width to use when creating buttons
-    button_height = 30; % Height to use when creating buttons 
-    spacing = (gui_width - 2*border)/5; % Spacing between buttons
-    
-    % Creates a gui that is not yet visible at a distance of 100 by 100 
-    % pixels from the lower left corner
-    f = figure('Visible','off','Position',[100,100,gui_width,gui_height]);
-   
-    %  Construct the components.
-    setupSerialButton = uicontrol('Style', 'pushbutton', ...
-        'String', 'Setup Serial', ...
-        'Position',[border+0*spacing,border,button_width,button_height],...
-        'Callback', {@setupSerialButton_Callback});
-    calibrateButton = uicontrol('Style', 'pushbutton', ...
-        'String', 'Calibrate', ...
-        'Position',[border+1*spacing,border,button_width,button_height],...
-        'Callback', {@calibrateButton_Callback});
-    startSamplingButton = uicontrol('Style', 'pushbutton', ...
-        'String', 'Start Sampling', ...
-        'Position',[border+2*spacing,border,button_width,button_height],...
-        'Callback', {@startSamplingButton_Callback});
-    stopSamplingButton = uicontrol('Style', 'pushbutton', ...
-        'String', 'Stop Sampling', ...
-        'Position',[border+3*spacing,border,button_width,button_height],...
-        'Callback', {@stopSamplingButton_Callback});
-    closeSerialButton = uicontrol('Style', 'pushbutton', ...
-        'String', 'Close Serial', ...
-        'Position',[border+4*spacing,border,button_width,button_height],...
-        'Callback', {@closeSerialButton_Callback});
-    componentPlot = axes('Parent', f, ...
-        'Position', [border, 2*border+button_height, gui_width-2*border,...
-        gui_height-3*border-button_height]);
+function varargout = Lab2Question2(varargin)
+    % LAB2QUESTION2 MATLAB code for Lab2Question2.fig
+    %      LAB2QUESTION2, by itself, creates a new LAB2QUESTION2 or raises the existing
+    %      singleton*.
+    %
+    %      H = LAB2QUESTION2 returns the handle to a new LAB2QUESTION2 or the handle to
+    %      the existing singleton*.
+    %
+    %      LAB2QUESTION2('CALLBACK',hObject,eventData,handles,...) calls the local
+    %      function named CALLBACK in LAB2QUESTION2.M with the given input arguments.
+    %
+    %      LAB2QUESTION2('Property','Value',...) creates a new LAB2QUESTION2 or raises the
+    %      existing singleton*.  Starting from the left, property value pairs are
+    %      applied to the GUI before Lab2Question2_OpeningFcn gets called.  An
+    %      unrecognized property name or invalid value makes property application
+    %      stop.  All inputs are passed to Lab2Question2_OpeningFcn via varargin.
+    %
+    %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
+    %      instance to run (singleton)".
+    %
+    % See also: GUIDE, GUIDATA, GUIHANDLES
 
-    % Specifies that the positions used are in reference to the lower left
-    % corner of the gui window
-    align([setupSerialButton, calibrateButton, startSamplingButton, ...
-        stopSamplingButton, closeSerialButton, componentPlot], ...
-        'LowerLeft','None');
-    
-    % Displays the gui
-    set(f,'Visible','on');
-    set(axes, 'Visible','on');
-    
-    % Setup accelerometer component time plot
-    grid on; % Displays grid lines
-    title('Accelerometer Component Values'); % Displays the plot title
-    xlabel('Time'); % Displays the plot xlabel
-    ylabel('Acceleration (g)'); % Displays the plot ylabel
-    axis([0 200 -3 3]); % Sets the x and y axis limits
+    % Edit the above text to modify the response to help Lab2Question2
 
+    % Last Modified by GUIDE v2.5 09-Jul-2014 18:36:22
 
-    function setupSerialButton_Callback(source, eventdata)
-        % Allows the user to setup a connection to the accelerometer
-        
-        global accelerometer; % The accelerometer variable is used in multiple
-                      % functions, so it is declared as global
-
-        % COM3 is the port that the arduino connects to
-        comPort = 'COM3';
-        % Setup communications with arduino
-        [accelerometer.s, serialPort] = setupSerial(comPort);
+    % Begin initialization code - DO NOT EDIT
+    gui_Singleton = 1;
+    gui_State = struct('gui_Name',       mfilename, ...
+                       'gui_Singleton',  gui_Singleton, ...
+                       'gui_OpeningFcn', @Lab2Question2_OpeningFcn, ...
+                       'gui_OutputFcn',  @Lab2Question2_OutputFcn, ...
+                       'gui_LayoutFcn',  [] , ...
+                       'gui_Callback',   []);
+    if nargin && ischar(varargin{1})
+        gui_State.gui_Callback = str2func(varargin{1});
     end
 
-
-    function calibrateButton_Callback(source, eventdata)
-        % Allows the user to calibrate the accelerometer
-        
-        global accelerometer; % The accelerometer variable is used in 
-                              % multiple functions, so it is declared as 
-                              % global
-        global calCo; % Information about calibration is returned by 
-                      % calibrate() that is used in the main loop, so it is
-                      % declared as global
-        calCo = calibrate(accelerometer.s); % Calibrates the accelerometer
+    if nargout
+        [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+    else
+        gui_mainfcn(gui_State, varargin{:});
     end
+    % End initialization code - DO NOT EDIT
 
 
-    function startSamplingButton_Callback(source, eventdata)
-        % When clicked, the accelerometer readings will be plotted
+    % --- Executes just before Lab2Question2 is made visible.
+    function Lab2Question2_OpeningFcn(hObject, eventdata, handles, varargin)
+        % This function has no output args, see OutputFcn.
+        % hObject    handle to figure
+        % eventdata  reserved - to be defined in a future version of MATLAB
+        % handles    structure with handles and user data (see GUIDATA)
+        % varargin   command line arguments to Lab2Question2 (see VARARGIN)
+
+        % Choose default command line output for Lab2Question2
+
+
+        handles.output = hObject;
+
+        % Update handles structure
+        guidata(hObject, handles);
+
+        % UIWAIT makes Lab2Question2 wait for user response (see UIRESUME)
+        % uiwait(handles.figure1);
+    
+
+    % --- Outputs from this function are returned to the command line.
+    function varargout = Lab2Question2_OutputFcn(hObject, eventdata, handles) 
+        % varargout  cell array for returning output args (see VARARGOUT);
+        % hObject    handle to figure
+        % eventdata  reserved - to be defined in a future version of MATLAB
+        % handles    structure with handles and user data (see GUIDATA)
+
+        % Get default command line output from handles structure
+
+        global accelerometer;
+        global calCo;
         
-        global shouldPlot; % The shouldPlot variable is used here to 
-                           % determine if accelerometer readings should be
-                           % plotted.
-        global accelerometer; % The accelerometer variable is used in 
-                              % multiple functions, so it is declared as 
-                              % global
-        global calCo; % Contains information about calibration returned in 
-                      % the calibrateButton_Callback function
+        buffLen = 200;
+        indices = 1:buffLen;
+        gxdata = zeros(buffLen, 1);
+        gydata = zeros(buffLen, 1);
+        gzdata = zeros(buffLen, 1);
         
-        shouldPlot = 1;
+        axes(handles.axes2);
         
-        figure(1)
         
-        % Time span of accelerometer readings to display
-        buf_len = 200;
+        axes(handles.axes1);
+        
+        grid on;
+        axis([0 200 -3 3]);
+        xlabel('Time');
+        ylabel('Acceleration (g)');
+        title('Rolling Acceleration Component Plot')
+            
+        while(1)
+            if(strcmp(get(handles.samplingButton,'String'),'Stop Sampling'))
+                [gx, gy, gz] = readAcc(accelerometer, calCo);
 
-        % create variables for all the three axis and the resultant 
-        gxdata = zeros(buf_len,1);
-        gydata = zeros(buf_len,1);
-        gzdata = zeros(buf_len,1);
-        resultantBuffer = zeros(buf_len,1); % add another buffer for the resultant
-        index = 1:buf_len;
-
-        while(shouldPlot)
-            [gx, gy, gz] = readAcc(accelerometer,calCo);
-            fprintf('%f %f %f\n' , [gx, gy, gz]);
-            gxdata = [gxdata(2:end) ; gx];
-            gydata = [gydata(2:end) ; gy];
-            gzdata = [gzdata(2:end) ; gz];    
-
-            resultantLength = sqrt(gx^2+gy^2+gz^2); % length of resulting vector
-            resultantBuffer = [resultantBuffer(2:end); resultantLength]; % plot data for resultant vector over time
-            plot(index,resultantBuffer, 'k'); % plot the last 200 readings of the resultantBuffer
+                gxdata = [gxdata(2:end) ; gx];
+                gydata = [gydata(2:end) ; gy];
+                gzdata = [gzdata(2:end) ; gz];    
+                
+                plot(indices, gxdata, 'b', indices, gydata, 'r', indices, gzdata, 'g')
+                axis([0 200 -3 3]);
+                
+                handles.axes1;
+                pause(.01);
+            else
+                pause(.01);
+            end
         end
-    end
+        
+        varargout{1} = handles.output;
 
 
-    function stopSamplingButton_Callback(source, eventdata)
-        global shouldPlot;
-        shouldPlot = 0;
-    end
+    % --- Executes on button press in pushbutton1.
+    function setupButton_Callback(hObject, eventdata, handles)
+        % hObject    handle to pushbutton1 (see GCBO)
+        % eventdata  reserved - to be defined in a future version of MATLAB
+        % handles    structure with handles and user data (see GUIDATA)
+        
+        global accelerometer;
+        global calCo;
+        
+        comPort = 'COM3';
+        if (~exist('serialFlag','var'))
+            [accelerometer.s,serialFlag] = setupSerial(comPort);
+        end
+        
+        calCo = calibrate(accelerometer.s);
 
+    % --- Executes on button press in samplingButton.
+    function samplingButton_Callback(hObject, eventdata, handles)
+        % hObject    handle to samplingButton (see GCBO)
+        % eventdata  reserved - to be defined in a future version of MATLAB
+        % handles    structure with handles and user data (see GUIDATA)
+        
+        if(strcmp(get(handles.samplingButton,'String'), 'Start Sampling'))
+            set(handles.samplingButton,'String','Stop Sampling');
+        else
+            % 
+            set(handles.samplingButton,'String','Start Sampling');
+        end
+        
+        
+    % --- Executes on button press in closeSerialButton.
+    function closeSerialButton_Callback(hObject, eventdata, handles)
+        % hObject    handle to closeSerialButton (see GCBO)
+        % eventdata  reserved - to be defined in a future version of MATLAB
+        % handles    structure with handles and user data (see GUIDATA)
 
-    function closeSerialButton_Callback(source, eventdata)
-        closeSerial;
-    end
-
-end
+        closeSerial; % Closes connection to the accelerometer
+        
