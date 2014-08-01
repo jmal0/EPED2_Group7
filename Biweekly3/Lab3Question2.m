@@ -150,8 +150,7 @@ for i = 2*pi/100:2*pi/100:2*pi
     y_vertices_new = y_vertices_new + center_y; % The translated y value
     
     % Change the color as the square moves. The color cycles sinusoidally
-    % from red to purple to blue to green to yellow. Why? I dunno because
-    % why not
+    % from red to purple to blue to green to yellow.
     color = [1-sin(i/2), .5-.5*cos(i/2), sin(i/2)];
     
     % Display the colored, scaled, translated, rotated square
