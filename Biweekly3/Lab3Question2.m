@@ -1,5 +1,6 @@
 % Biweekly 3 Question 2
 % Authors: Leonard Chan, John Maloney
+% Section 74 Group 7
 
 clc; % Clear command line
 clear; % Clears all variables from the workspace
